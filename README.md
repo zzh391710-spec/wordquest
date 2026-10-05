@@ -1,0 +1,152 @@
+# WordQuest 单词闯关
+
+一个在游戏里习得英语单词的网页游戏。四个游戏世界共用一套词库和记忆模型：答错的词会在之后的关卡里回来，直到记住为止。
+
+纯 HTML / CSS / JavaScript，无需构建、无依赖，可直接部署到 GitHub Pages，也可以本地双击 `index.html` 离线游玩。
+
+## 四个游戏模式
+
+| 模式 | 玩法 | 主要训练 |
+| --- | --- | --- |
+| 🗡️ Lexicon Dungeon 地牢冒险 | 6 个房间：普通怪、宝箱、精英怪、巨龙 Boss。答对造成伤害，3 秒内答对暴击，答错扣血 | 识别 → 拼写 → 语境填空，三阶段齐全 |
+| 🔍 Word Detective 侦探解谜 | 勘查现场解开被墨渍遮住的线索词，审问证人，最后用收集到的证据完成推理、指认凶手 | 语境理解、近义辨析 |
+| ☕ Word Café 经营咖啡馆 | 顾客用英语点单，在耐心耗尽前给出正确的词；常客 = 复习词；小费可购买装饰 | 日常习惯、定义↔单词 |
+| 🎧 Echo Runner 听力跑酷 | 听发音，切换到正确中文释义的跑道；每第 6 道门要求听写；速度随连击上升 | 听音辨义、听写 |
+
+## 功能
+
+- **用户体系**：注册（昵称、用户名、可选邮箱、密码）、登录（用户名或邮箱）、退出；修改昵称 / 邮箱 / 头像；修改密码；删除账号
+- **账号信息**：注册时间、最近登录、登录次数、等级、经验、金币、连续天数、最佳连续天数、总局数
+- **游戏记录**：每局保存模式、结果、得分、正确率、新词 / 复习词数、XP、金币、用时、摘要；支持按模式筛选和汇总统计
+- **单词进度**：每个词的阶段（新词 / 学习中 / 复习中 / 已掌握）、正确率、下次复习时间
+- **SM-2 间隔重复**：到期复习优先，新词按比例补充；复习积压过多时自动暂停新词
+- **题型随熟练度升级**：识别（看词选义、看释义选词、听音选义）→ 回忆（看释义拼写、听音拼写）→ 运用（句子填空、句子拼写）
+- **自适应难度**：根据最近 8 题正确率调整答题时间，目标正确率 75–85%
+- **道具与商店**：提示卷轴、沙漏、凤凰羽毛
+- **发音**：浏览器自带语音（Web Speech API），可选美音 / 英音和语速
+- **备份**：导出 / 导入 JSON，可在设备间迁移进度（不含密码）
+
+## 本地运行
+
+```bash
+# 方式一：直接双击 index.html
+
+# 方式二：起一个本地服务器（推荐，行为和线上一致）
+python3 -m http.server 8000
+# 打开 http://localhost:8000
+```
+
+## 部署到 GitHub Pages
+
+1. 新建仓库，把本目录所有文件推上去（`index.html` 放在仓库根目录）
+2. 仓库 Settings → Pages → Source 选 `Deploy from a branch`，分支选 `main`，目录选 `/ (root)`
+3. 保存后等一两分钟，访问 `https://<你的用户名>.github.io/<仓库名>/`
+
+```bash
+git init
+git add .
+git commit -m "WordQuest: first playable version"
+git branch -M main
+git remote add origin https://github.com/<你的用户名>/<仓库名>.git
+git push -u origin main
+```
+
+## 目录结构
+
+```
+index.html            入口，按顺序加载所有脚本
+css/style.css         全部样式
+js/
+  core/
+    util.js           工具函数、事件总线
+    storage.js        localStorage 封装
+    db.js             数据访问层（异步接口，可替换为后端）
+    auth.js           注册、登录、账号管理、密码哈希
+    srs.js            SM-2 间隔重复
+    engine.js         选词、出题、判分、记录、结算
+    audio.js          发音与音效
+  data/words.js       词库（48 个高阶词，4 个主题）
+  ui/
+    kit.js            DOM 工具、表单、提示、路由
+    question.js       通用题目组件、新词卡片
+    game.js           模式注册表、游戏外壳、ctx 接口
+  modes/              四个游戏模式
+  screens/            登录、主页、个人中心、结算页
+  app.js              启动
+```
+
+## 架构
+
+```
+          ┌──────────── screens（登录 / 主页 / 个人中心 / 结算）
+          │
+modes ────┤  dungeon · detective · cafe · runner
+          │        │  只负责“皮肤”和关卡规则
+          │        ▼
+          │   ctx（ui/game.js）：ask · intro · log · useItem · finish
+          │        │
+          ▼        ▼
+       engine（选词、出题、判分、结算） ── srs（SM-2）
+          │
+         db（异步接口） ── storage（localStorage，可换成 Supabase 等）
+```
+
+新增一个模式只需要在 `js/modes/` 新建文件并注册：
+
+```js
+WQ.Modes.register({
+  id: 'mymode',
+  name: 'My Mode',
+  icon: '🎯',
+  tagline: 'One line describing the game.',
+  sessionSize: (settings) => 10,          // 可选
+  start: async (ctx) => {
+    const panel = WQ.h('div');
+    ctx.stage.replaceChildren(panel);
+    for (const entry of ctx.entries) {
+      await ctx.intro(panel, entry);       // 新词先展示
+      const res = await ctx.ask(panel, entry, { timeLimit: 20 });
+      // res.correct / res.ms / res.hinted ...
+    }
+    ctx.finish({ result: 'win', score: 100, coins: 10 });
+  }
+});
+```
+
+然后在 `index.html` 里加一行 `<script src="js/modes/mymode.js"></script>`，并在 `css/style.css` 的 `:root` 里加一个 `--mymode` 颜色。
+
+## 数据模型
+
+| 存储键 | 内容 |
+| --- | --- |
+| `users` | `{ [id]: { id, username, displayName, email, avatar, salt, passwordHash, createdAt, updatedAt, lastLoginAt, loginCount } }` |
+| `session` | `{ userId, since }` |
+| `profile:<id>` | `{ xp, coins, streak, bestStreak, lastPlayDate, totalSessions, inventory, cafeDecor, best, settings }` |
+| `srs:<id>` | `{ [wordId]: { ef, interval, reps, due, seen, correct, wrong, lapses, last } }` |
+| `records:<id>` | `[{ id, mode, startedAt, endedAt, durationSec, result, score, questions, correct, accuracy, xp, coins, newWords, reviewedWords, bestCombo, words, summary, detail }]` |
+
+所有键都带 `wordquest:v1:` 前缀。
+
+## 替换词库
+
+编辑 `js/data/words.js` 里的 `RAW` 数组，每行格式：
+
+```js
+['word', 'adj.', '/fəˈnetɪk/', '中文释义', 'English definition', 'An example sentence containing word.', 'Theme', ['confusable1', 'confusable2']]
+```
+
+例句必须原样包含这个单词（用于生成填空题）；`confusables` 是形近 / 音近词，会作为干扰项出现。
+
+## 关于账号安全
+
+当前版本的账号保存在浏览器本地：密码用 PBKDF2-SHA256（12 万次迭代、随机盐）哈希后存储，不会明文保存。但这仍然是**本地账号**，不能防止有设备访问权限的人修改数据，也不能跨设备同步。
+
+要做多设备同步或公开上线，把 `js/core/db.js` 换成真正的后端（例如 Supabase：`users` 用 Supabase Auth，`profile` / `srs` / `records` 各建一张表）。`db.js` 的接口已经是异步的，界面和游戏模式不需要改。
+
+## 后续可以做
+
+- 词库导入（CSV / JSON 上传），支持多套词库切换
+- Supabase 后端与跨设备同步
+- 地牢多层与更多 Boss，侦探多章节剧情
+- 每日任务、成就徽章
+- PWA（离线安装到手机桌面）
