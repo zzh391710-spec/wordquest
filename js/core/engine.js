@@ -63,9 +63,9 @@
   };
 
   /* ---------- question building ---------- */
-  E.blank = function (w) {
+  E.blank = function (w, sentence) {
     const re = new RegExp('\\b' + U.escapeRegExp(w.word) + '\\b', 'i');
-    return w.example.replace(re, '_____');
+    return (sentence || w.example).replace(re, '_____');
   };
 
   function distractors(w) {
@@ -110,9 +110,14 @@
     return U.pick(list);
   };
 
-  E.makeQuestion = function (entry, type) {
+  /**
+   * opts.sentence  use this sentence (containing the word) instead of the dictionary example
+   * opts.showDef   show the English definition under a cloze sentence
+   */
+  E.makeQuestion = function (entry, type, opts = {}) {
     const w = entry.word;
-    const base = { type, entry, word: w, answer: w.word };
+    const sentence = opts.sentence || w.example;
+    const base = { type, entry, word: w, answer: w.word, sentence };
     switch (type) {
       case 'meaning':
         return Object.assign(base, { input: 'choice', prompt: { kind: 'word' }, options: E.meaningOptions(w), speak: true, hint: 'fifty', ask: 'Choose the meaning' });
@@ -125,9 +130,9 @@
       case 'spell-listen':
         return Object.assign(base, { input: 'type', prompt: { kind: 'audio' }, speak: true, hint: 'letters', ask: 'Type the word you hear' });
       case 'cloze':
-        return Object.assign(base, { input: 'choice', prompt: { kind: 'sentence', text: E.blank(w) }, options: E.wordOptions(w), hint: 'cn', ask: 'Fill in the blank' });
+        return Object.assign(base, { input: 'choice', prompt: { kind: 'sentence', text: E.blank(w, sentence), showDef: !!opts.showDef }, options: E.wordOptions(w), hint: 'cn', ask: 'Fill in the blank' });
       case 'cloze-type':
-        return Object.assign(base, { input: 'type', prompt: { kind: 'sentence', text: E.blank(w), showDef: true }, hint: 'letters', ask: 'Type the missing word' });
+        return Object.assign(base, { input: 'type', prompt: { kind: 'sentence', text: E.blank(w, sentence), showDef: opts.showDef == null ? true : !!opts.showDef }, hint: 'letters', ask: 'Type the missing word' });
       default:
         throw new Error('Unknown question type: ' + type);
     }

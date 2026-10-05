@@ -2,13 +2,13 @@
 
 一个在游戏里习得英语单词的网页游戏。四个游戏世界共用一套词库和记忆模型：答错的词会在之后的关卡里回来，直到记住为止。
 
-纯 HTML / CSS / JavaScript，无需构建、无依赖，可直接部署到 GitHub Pages，也可以本地双击 `index.html` 离线游玩。
+纯 HTML / CSS / JavaScript，无需构建，可直接部署到 GitHub Pages，也可以本地双击 `index.html` 离线游玩。地牢模式的 3D 画面使用 three.js（已放在 `js/vendor/`，不依赖网络）；所有模型、贴图都用代码生成，没有外部素材文件。不支持 WebGL 的设备会自动切换成 2D 画面。
 
 ## 四个游戏模式
 
 | 模式 | 玩法 | 主要训练 |
 | --- | --- | --- |
-| 🗡️ Lexicon Dungeon 地牢冒险 | 6 个房间：普通怪、宝箱、精英怪、巨龙 Boss。答对造成伤害，3 秒内答对暴击，答错扣血 | 识别 → 拼写 → 语境填空，三阶段齐全 |
+| 🗡️ Lexicon Dungeon 地牢冒险（3D） | 第三人称 3D 地牢：勇者穿过火把照亮的走廊，6 个房间依次是普通怪、宝箱、精英怪、巨龙 Boss。每个单词都有一句发生在地牢里的句子，填出缺失的词才能出招；一局的句子按房间顺序连成一个小故事，结算页可以读到 | 语境填空（选词 / 拼写），难度随熟练度上升 |
 | 🔍 Word Detective 侦探解谜 | 勘查现场解开被墨渍遮住的线索词，审问证人，最后用收集到的证据完成推理、指认凶手 | 语境理解、近义辨析 |
 | ☕ Word Café 经营咖啡馆 | 顾客用英语点单，在耐心耗尽前给出正确的词；常客 = 复习词；小费可购买装饰 | 日常习惯、定义↔单词 |
 | 🎧 Echo Runner 听力跑酷 | 听发音，切换到正确中文释义的跑道；每第 6 道门要求听写；速度随连击上升 | 听音辨义、听写 |
@@ -66,11 +66,16 @@ js/
     engine.js         选词、出题、判分、记录、结算
     audio.js          发音与音效
   data/words.js       词库（48 个高阶词，4 个主题）
+  data/dungeon-story.js 地牢故事：每个词一句地牢里的句子、房间旁白、章节主题
   ui/
     kit.js            DOM 工具、表单、提示、路由
     question.js       通用题目组件、新词卡片
     game.js           模式注册表、游戏外壳、ctx 接口
-  modes/              四个游戏模式
+  vendor/three.min.js three.js r149（MIT 许可，见 three.LICENSE）
+  modes/
+    dungeon3d.js      地牢 3D 场景：走廊、勇者、7 种怪物、动画、特效
+    dungeon.js        地牢规则（3D / 2D 两种画面共用）
+    detective.js · cafe.js · runner.js
   screens/            登录、主页、个人中心、结算页
   app.js              启动
 ```
@@ -143,10 +148,33 @@ WQ.Modes.register({
 
 要做多设备同步或公开上线，把 `js/core/db.js` 换成真正的后端（例如 Supabase：`users` 用 Supabase Auth，`profile` / `srs` / `records` 各建一张表）。`db.js` 的接口已经是异步的，界面和游戏模式不需要改。
 
+## 地牢里的故事是怎么拼出来的
+
+- `js/data/dungeon-story.js` 给每个单词写了一句发生在地牢里的句子，并标注它最适合的房间：`gate`（进门）、`battle`（战斗）、`chest`（宝箱）、`elite`（精英守卫）、`boss`（巨龙）。句子里可以用 `{hero}`（玩家昵称）和 `{foe}`（当前房间的怪物）。
+- 每局开始时，SRS 选出这局要练的词，再按房间"发牌"：进门先用 gate 句，宝箱房用 chest 句，巨龙房用 boss 句，不够时用战斗句补。
+- 每道题都是这句话的填空：新词给出英文释义并选词，熟一些的词改为拼写，精英怪和巨龙必须拼写。
+- 一局的句子按顺序存起来，结算页显示"Your tale"，并按这局单词的主要主题给章节起名（The Hall of Feelings / The Court Below / The Riddle Vault / The Shifting Halls），3D 场景里的旗帜和尘埃颜色也随主题变化。
+- 换词库时，给新词在 `dungeon-story.js` 里补一句即可；没有写的词会退回用词典例句。
+
+## 3D 地牢的结构
+
+`dungeon3d.js` 对外只暴露几个动画方法，`dungeon.js` 通过它们驱动剧情，不关心画面细节：
+
+| 方法 | 画面 |
+| --- | --- |
+| `openGate()` / `walkTo(i)` | 打开大门；勇者走到第 i 个房间，镜头跟随 |
+| `heroAttack({ crit })` | 举剑、挥砍、法术飞向怪物，命中闪光和粒子 |
+| `foeAttack()` | 怪物冲向勇者（巨龙改为喷火），屏幕震动和红色闪光 |
+| `foeDie()` / `openChest()` | 怪物消散；宝箱打开、金币飞出 |
+| `heroFall()` / `heroRevive()` / `victory()` | 倒地、凤凰羽毛复活、胜利举剑 |
+
+要换模型或加新怪物，在 `BUILDERS` 里加一个函数，返回 `{ root, body, height, center, update(t) }`，再在 `dungeon.js` 的 `MONSTERS` 里引用它的 key。
+
 ## 后续可以做
 
 - 词库导入（CSV / JSON 上传），支持多套词库切换
 - Supabase 后端与跨设备同步
+- 把侦探、咖啡馆、跑酷也做成 3D 场景（可复用 dungeon3d.js 的角色和特效）
 - 地牢多层与更多 Boss，侦探多章节剧情
 - 每日任务、成就徽章
 - PWA（离线安装到手机桌面）

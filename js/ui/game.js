@@ -5,7 +5,7 @@
  * start(ctx) draws into ctx.stage and calls ctx.finish({...}) when the game ends.
  *
  * ctx API
- *   ctx.ask(container, entry, { type?, pool?, timeLimit?, framing?, onSettle?, onView? }) -> Promise<result>
+ *   ctx.ask(container, entry, { type?, pool?, timeLimit?, framing?, sentence?, showDef?, onSettle?, onView? }) -> Promise<result>
  *   ctx.intro(container, entry, { label?, cta? })  -> Promise<boolean>  (only for new words, once)
  *   ctx.log(entry, type, result)                    record an answer from a custom interaction
  *   ctx.useItem(name) -> boolean                    spend an inventory item
@@ -67,7 +67,7 @@
 
         ask(container, entry, o = {}) {
           const type = o.type || E.pickType(entry, o.pool);
-          const q = E.makeQuestion(entry, type);
+          const q = E.makeQuestion(entry, type, { sentence: o.sentence, showDef: o.showDef });
           return new Promise((resolve) => {
             const view = WQ.QuestionView(q, {
               timeLimit: o.timeLimit || 0,
