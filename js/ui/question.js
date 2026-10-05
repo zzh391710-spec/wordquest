@@ -162,7 +162,9 @@
 
       if (result.correct) {
         A.sfx('correct');
-        feedback.replaceChildren(h('div', { class: 'fb good' }, U.pick(PRAISE), ' ', h('b', { lang: 'en' }, w.word), ` · ${w.cn}`));
+        feedback.replaceChildren(h('div', { class: 'fb good' },
+          h('div', null, U.pick(PRAISE), ' ', h('b', { lang: 'en' }, w.word), ` · ${w.cn}`),
+          q.prompt.kind === 'sentence' ? h('div', { class: 'fb-example', lang: 'en' }, highlight(q.sentence || w.example, w.word)) : null));
         later = setTimeout(done, opts.correctDelay == null ? 900 : opts.correctDelay);
       } else {
         A.sfx('wrong');
@@ -171,7 +173,7 @@
         feedback.replaceChildren(h('div', { class: 'fb bad' },
           h('div', { class: 'fb-title' }, title),
           h('div', { class: 'fb-answer' }, h('b', { lang: 'en' }, w.word), ' ', w.ipa ? h('span', { class: 'ipa' }, w.ipa) : null, ` · ${w.cn}`),
-          h('div', { class: 'fb-example', lang: 'en' }, highlight(w.example, w.word)),
+          h('div', { class: 'fb-example', lang: 'en' }, highlight(q.sentence || w.example, w.word)),
           contBtn));
         setTimeout(() => { if (contBtn && contBtn.isConnected) contBtn.focus(); }, 30);
       }

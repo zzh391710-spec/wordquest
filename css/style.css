@@ -312,6 +312,80 @@ mark { background: rgba(255, 201, 74, 0.3); color: inherit; border-radius: 4px; 
 .foe-hp { width: 180px; margin: 0 auto; }
 .foe-hp > span { background: var(--bad); }
 
+/* ---------- dungeon · 3D viewport ---------- */
+.dg3d-view {
+  position: relative; overflow: hidden; margin-bottom: 18px;
+  height: clamp(320px, 56vh, 580px); border-radius: var(--r-m);
+  background: #0d0b1e;
+}
+.dg3d-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dg3d-view::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; box-shadow: inset 0 0 120px 20px rgba(5, 4, 14, 0.75); }
+.dungeon-3d .dg-hud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 3; margin: 0;
+  padding: 12px 14px 26px;
+  background: linear-gradient(180deg, rgba(13, 11, 30, 0.88), rgba(13, 11, 30, 0));
+}
+.dungeon-3d .dg-rooms li { background: rgba(18, 20, 56, 0.75); }
+.dungeon-3d .dg-rooms li.done { background: rgba(255, 138, 61, 0.35); }
+.dungeon-3d .item-btn { background: rgba(18, 20, 56, 0.8); }
+.dg3d-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.dg3d-label { position: absolute; transform: translate(-50%, -100%); text-align: center; min-width: 150px; }
+.dg3d-label.hidden { display: none; }
+.dg3d-name { font-weight: 900; white-space: nowrap; margin-bottom: 5px; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9); }
+.dg3d-hp { width: 150px; height: 9px; margin: 0 auto; border: 2px solid rgba(0, 0, 0, 0.5); box-sizing: content-box; }
+.dg3d-hp > span { background: var(--bad); }
+.dg3d-dmg {
+  position: absolute; transform: translate(-50%, -50%); white-space: nowrap;
+  font-family: var(--font-display); font-size: 2rem; color: #fff;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6); animation: dmgUp 1s forwards;
+}
+.dg3d-dmg.crit { color: var(--gold); font-size: 2.3rem; }
+.dg3d-dmg.loot { color: var(--gold); font-size: 1.5rem; }
+@keyframes dmgUp {
+  0% { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -170%) scale(1); }
+}
+.dg3d-vignette {
+  position: absolute; inset: 0; opacity: 0; transition: opacity 0.45s;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(255, 40, 70, 0.6));
+}
+.dg3d-vignette.on { opacity: 1; transition: none; }
+.dg3d-banner { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); text-align: center; opacity: 0; }
+.dg3d-banner.show { animation: roomBanner 1.9s forwards; }
+.dg3d-banner b {
+  display: block; font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(1.8rem, 5vw, 3rem); color: var(--dungeon); text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+}
+.dg3d-banner span { font-weight: 900; font-size: 1.1rem; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95); }
+@keyframes roomBanner {
+  0% { opacity: 0; transform: translate(-50%, -35%); }
+  15%, 75% { opacity: 1; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, -62%); }
+}
+.dg3d-status { text-align: center; color: var(--muted); font-weight: 800; padding: 22px 0; margin: 0; }
+@media (max-width: 560px) {
+  .dg3d-view { height: 44vh; min-height: 270px; }
+  .dungeon-3d .dg-hud { gap: 8px; padding: 8px 10px 20px; }
+  .dungeon-3d .dg-rooms li { width: 26px; height: 26px; font-size: 0.8rem; }
+  .dg3d-label { min-width: 120px; }
+  .dg3d-hp { width: 120px; }
+}
+
+/* ---------- dungeon · story ---------- */
+.dg-chapter { font-family: var(--font-display); color: var(--dungeon); font-size: 1.2rem; margin-bottom: 6px; }
+.dg-story-frame { margin-bottom: 14px; }
+.dg-narration { color: var(--muted); font-style: italic; font-weight: 700; text-align: center; margin: 0 0 4px; }
+.dg-story-last { color: var(--muted); font-size: 0.9rem; text-align: center; margin: 0; opacity: 0.8; }
+.tale { background: var(--deep); border-radius: var(--r-m); padding: 16px 20px; margin-top: 18px; text-align: left; }
+.tale .res-sub { margin-top: 0; }
+.tale-lines { padding-left: 0; list-style: none; margin: 0 0 12px; }
+.tale-lines li { padding: 8px 0; border-top: 1px solid var(--line); line-height: 1.6; }
+.tale-lines li:first-child { border-top: 0; }
+.tale-lines li.missed mark { background: rgba(255, 107, 129, 0.3); }
+.tale-room { display: inline-block; font-size: 0.78rem; font-weight: 900; color: var(--dungeon); margin-right: 4px; }
+.tale-end { font-style: italic; color: var(--muted); margin: 0; }
+
 /* ---------- detective ---------- */
 .dt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .dt-case { font-family: var(--font-display); color: var(--detective); font-size: 1.3rem; line-height: 1.1; }
@@ -466,4 +540,5 @@ td.summary { white-space: normal; min-width: 220px; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .dg3d-banner.show, .dg3d-dmg { animation: none !important; opacity: 1; }
 }

@@ -5,6 +5,11 @@
   const h = WQ.h, U = WQ.U, UI = WQ.UI;
   const DEFAULT_TITLE = { win: 'Victory!', lose: 'Defeated', quit: 'Game ended', done: 'Finished' };
 
+  function taleText(text, word) {
+    const parts = text.split(new RegExp('(\\b' + U.escapeRegExp(word) + '\\b)', 'i'));
+    return parts.map((p, i) => (i % 2 ? h('mark', null, p) : p));
+  }
+
   WQ.App.register('results', function (s) {
     if (!s || !s.record) { WQ.App.go('hub'); return; }
     const r = s.record;
@@ -33,6 +38,11 @@
         stat(`+${r.coins}`, 'coins'),
         stat(`×${r.bestCombo}`, 'best combo'),
         stat(U.fmtDuration(r.durationSec), 'time')),
+      extra.story ? h('section', { class: 'tale' },
+        h('h2', { class: 'res-sub' }, `Your tale: ${extra.story.title}`),
+        h('ol', { class: 'tale-lines', lang: 'en' }, extra.story.lines.map((l) => h('li', { class: l.correct ? '' : 'missed' },
+          h('span', { class: 'tale-room' }, `Room ${l.room}`), ' ', taleText(l.text, l.word)))),
+        h('p', { class: 'tale-end', lang: 'en' }, extra.story.ending)) : null,
       h('h2', { class: 'res-sub' }, `Words in this game · ${r.newWords} new, ${r.reviewedWords} reviewed`),
       wordList,
       h('div', { class: 'res-actions' },
