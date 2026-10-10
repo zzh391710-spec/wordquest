@@ -1,0 +1,22 @@
+name: Deploy to S3
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::295356239398:role/github-deploy-s3   # ← 换成你的 ARN
+          aws-region: ap-southeast-1                                     # ← 换成你桶所在的 Region
+
+      - run: aws s3 sync . s3://wordquest-awsbucket --delete --exclude ".git/*" --exclude ".github/*"   # ← 换成你的桶名
