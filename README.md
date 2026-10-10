@@ -178,3 +178,12 @@ WQ.Modes.register({
 - 地牢多层与更多 Boss，侦探多章节剧情
 - 每日任务、成就徽章
 - PWA（离线安装到手机桌面）
+
+## 云端后端（AWS Amplify）
+
+仓库根目录有 `amplify/` 文件夹时，Amplify 会在每次推送后自动创建/更新：
+
+- 账号库（Cognito）：保存用户名 + 密码（密码由 AWS 加密保存，任何人包括管理员都看不到明文）
+- 数据库（DynamoDB，3 张表）：`UserProfile`（注册信息 + 等级/金币/连续天数）、`WordProgress`（每个用户每个单词的学习进度）、`GameRecord`（每局游戏记录）
+
+前端通过 `js/core/cloud.js` 自动切换：线上有 `amplify_outputs.json` 就用云端；本地双击 `index.html` 则继续使用浏览器本地存储。修改 `cloud-src/bridge.js` 后需运行 `npm run build:cloud` 重新生成 `js/vendor/amplify-bundle.js`。

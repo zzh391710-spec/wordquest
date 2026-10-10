@@ -17,7 +17,7 @@
 
     function signInForm() {
       const form = h('form', { novalidate: true },
-        UI.field('Username or email', 'login', 'text', { autocomplete: 'username', required: true }),
+        UI.field(WQ.Cloud.enabled ? 'Username' : 'Username or email', 'login', 'text', { autocomplete: 'username', required: true, autocapitalize: 'off' }),
         UI.field('Password', 'password', 'password', { autocomplete: 'current-password', required: true }),
         h('div', { class: 'form-err', role: 'alert' }),
         h('button', { class: 'btn btn-gold btn-block', type: 'submit' }, 'Sign in'));
@@ -43,7 +43,7 @@
       const form = h('form', { novalidate: true },
         UI.field('Display name', 'displayName', 'text', { autocomplete: 'nickname', maxlength: '24', required: true }, 'Shown on your profile and results.'),
         UI.field('Username', 'username', 'text', { autocomplete: 'username', maxlength: '20', required: true, autocapitalize: 'off' }, '3–20 lowercase letters, numbers or _'),
-        UI.field('Email (optional)', 'email', 'email', { autocomplete: 'email' }, 'You can sign in with it too.'),
+        UI.field('Email (optional)', 'email', 'email', { autocomplete: 'email' }, WQ.Cloud.enabled ? 'Optional. Saved to your profile.' : 'You can sign in with it too.'),
         UI.field('Password', 'password', 'password', { autocomplete: 'new-password', required: true }, 'At least 6 characters.'),
         UI.field('Confirm password', 'confirm', 'password', { autocomplete: 'new-password', required: true }),
         h('div', { class: 'form-err', role: 'alert' }),
@@ -77,7 +77,7 @@
       panel.replaceChildren(
         h('div', { class: 'tabs', role: 'tablist' }, tab('signin', 'Sign in'), tab('signup', 'Create account')),
         form,
-        h('p', { class: 'fine' }, 'Your account and progress are saved in this browser on this device. Use Backup in your profile to move them.'));
+        h('p', { class: 'fine' }, WQ.Cloud.enabled ? 'Your account and progress are saved online, so you can pick up on any device.' : 'Your account and progress are saved in this browser on this device. Use Backup in your profile to move them.'));
       const first = form.querySelector('input');
       if (first) setTimeout(() => first.focus(), 30);
     }

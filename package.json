@@ -1,0 +1,24 @@
+{
+  "name": "wordquest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:cloud": "esbuild cloud-src/bridge.js --bundle --minify --format=iife --target=es2020 --outfile=js/vendor/amplify-bundle.js",
+    "typecheck": "tsc --noEmit -p amplify/tsconfig.json"
+  },
+  "devDependencies": {
+    "@aws-amplify/backend": "^1.25.1",
+    "@aws-amplify/backend-cli": "^1.10.0",
+    "@types/aws-lambda": "^8.10.164",
+    "aws-cdk": "^2.1145.0",
+    "aws-cdk-lib": "^2.273.0",
+    "constructs": "^10.8.1",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "aws-amplify": "^6.22.1"
+  }
+}

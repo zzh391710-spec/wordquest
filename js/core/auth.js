@@ -184,7 +184,16 @@
     logout();
   }
 
+  /* Hooks used by js/core/cloud.js to swap local accounts for AWS accounts */
+  function setCurrent(user) {
+    current = user ? publicUser(user) : null;
+    WQ.bus.emit('auth', current);
+    return current;
+  }
+
   WQ.Auth = {
+    _setCurrent: setCurrent,
+    _v: { cleanDisplayName, cleanEmail, checkNewPassword, USERNAME_RE },
     register, login, logout, restore, updateAccount, changePassword, deleteAccount,
     user: () => current,
     AVATARS,

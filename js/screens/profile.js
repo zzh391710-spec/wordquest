@@ -50,7 +50,7 @@
 
       const form = h('form', { novalidate: true },
         UI.field('Display name', 'displayName', 'text', { value: user.displayName, maxlength: '24' }),
-        UI.field('Email', 'email', 'email', { value: user.email || '' }, 'Optional. You can sign in with it.'),
+        UI.field('Email', 'email', 'email', { value: user.email || '' }, WQ.Cloud.enabled ? 'Optional.' : 'Optional. You can sign in with it.'),
         h('div', { class: 'field' }, h('span', { class: 'label' }, 'Avatar'), h('div', { class: 'avatars' }, avatarBtns)),
         h('div', { class: 'form-err', role: 'alert' }),
         h('button', { class: 'btn btn-gold', type: 'submit' }, 'Save changes'));
@@ -235,7 +235,7 @@
       });
 
       const delForm = h('form', { novalidate: true },
-        h('p', { class: 'muted' }, 'This deletes your account, word progress and game records from this browser. It cannot be undone.'),
+        h('p', { class: 'muted' }, WQ.Cloud.enabled ? 'This deletes your account, word progress and game records. It cannot be undone.' : 'This deletes your account, word progress and game records from this browser. It cannot be undone.'),
         UI.field('Enter your password to confirm', 'deletePassword', 'password', { autocomplete: 'current-password' }),
         h('div', { class: 'form-err', role: 'alert' }),
         h('button', { class: 'btn btn-danger', type: 'submit' }, 'Delete account'));
@@ -277,7 +277,7 @@
       });
       return h('div', null,
         h('h2', null, 'Backup'),
-        h('p', { class: 'muted measure' }, 'Progress lives in this browser. Download a backup to keep it safe or to move it to another device, then restore it after signing in there.'),
+        h('p', { class: 'muted measure' }, WQ.Cloud.enabled ? 'Your progress is already saved online. You can still download a copy, or restore one from a file.' : 'Progress lives in this browser. Download a backup to keep it safe or to move it to another device, then restore it after signing in there.'),
         h('div', { class: 'actions' },
           h('button', { class: 'btn btn-gold', type: 'button', onclick: async () => {
             const backup = await DB.exportUser(user.id);
